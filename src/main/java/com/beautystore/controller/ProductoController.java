@@ -4,19 +4,13 @@ import com.beautystore.model.Producto;
 import com.beautystore.service.ProductoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/productos")
+@CrossOrigin(origins = "*")
 public class ProductoController {
 
     private final ProductoService productoService;
@@ -41,9 +35,7 @@ public class ProductoController {
     public ResponseEntity<Producto> crearProducto(
             @Valid @RequestBody Producto producto) {
 
-        Producto productoGuardado = productoService.guardar(producto);
-
-        return ResponseEntity.ok(productoGuardado);
+        return ResponseEntity.ok(productoService.guardar(producto));
     }
 
     @PutMapping("/{id}")
@@ -53,15 +45,13 @@ public class ProductoController {
 
         return productoService.buscarPorId(id)
                 .map(productoExistente -> {
-
                     productoExistente.setNombre(producto.getNombre());
                     productoExistente.setPrecio(producto.getPrecio());
                     productoExistente.setStock(producto.getStock());
 
-                    Producto actualizado =
-                            productoService.guardar(productoExistente);
-
-                    return ResponseEntity.ok(actualizado);
+                    return ResponseEntity.ok(
+                            productoService.guardar(productoExistente)
+                    );
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -69,14 +59,11 @@ public class ProductoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
 
-        return productoService.buscarPorId(id)
-                .map(producto -> {
+        if (productoService.buscarPorId(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-                    productoService.eliminar(id);
-
-                    return ResponseEntity.noContent().<Void>build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        productoService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }
-
